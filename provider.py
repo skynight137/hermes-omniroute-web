@@ -11,6 +11,7 @@ only needs the gateway URL and key. Env: ``OMNIROUTE_API_URL`` (base incl.
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Dict, List
 
 from plugins.web._common import (
@@ -27,7 +28,9 @@ from plugins.web._common import (
 logger = logging.getLogger(__name__)
 
 _SEARCH_CAP = 20  # OmniRoute search accepts up to 20 results per request (matches vendor cap)
-_SEARCH_PROVIDER = "firecrawl"  # pinned upstream; OmniRoute handles the Firecrawl credential
+# Upstream pins, selected by env so you can switch without a code change. Values are OmniRoute provider ids.
+_SEARCH_PROVIDER = os.environ.get("OMNIROUTE_SEARCH_PROVIDER", "serper-search")
+_FETCH_PROVIDER = os.environ.get("OMNIROUTE_FETCH_PROVIDER", "firecrawl")
 
 
 def _gateway_root() -> str:
@@ -90,7 +93,7 @@ class OmniRouteWebProvider(BaseWebSearchProvider):
         out: List[Dict[str, Any]] = []
         for url in urls:
             try:
-                data = _post("/api/v1/web/fetch", {"url": url})
+                data = _post("/api/v1/web/fetch", {"url": url, "provider": _FETCH_PROVIDER})
             except RuntimeError as exc:
                 out.append(page_error(url, str(exc)))
                 continue
