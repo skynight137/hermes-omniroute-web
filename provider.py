@@ -27,6 +27,7 @@ from plugins.web._common import (
 logger = logging.getLogger(__name__)
 
 _SEARCH_CAP = 20  # OmniRoute search accepts up to 20 results per request (matches vendor cap)
+_SEARCH_PROVIDER = "firecrawl"  # pinned upstream; OmniRoute handles the Firecrawl credential
 
 
 def _gateway_root() -> str:
@@ -73,7 +74,11 @@ class OmniRouteWebProvider(BaseWebSearchProvider):
         if not self.is_available():
             return search_fail("OMNIROUTE_API_URL and OMNIROUTE_API_KEY must be set")
         try:
-            data = _post("/api/v1/search", {"query": query, "count": max(1, min(int(limit), _SEARCH_CAP))})
+            data = _post("/api/v1/search", {
+                "query": query,
+                "count": max(1, min(int(limit), _SEARCH_CAP)),
+                "provider": _SEARCH_PROVIDER,
+            })
         except RuntimeError as exc:
             return search_fail(str(exc))
         raw = data.get("results") or []
